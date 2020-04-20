@@ -1,0 +1,44 @@
+import arcpy
+arcpy.env.overwriteOutput = True
+
+out_folder_path = “C:/Users/erika/OneDrive – The University of Colorado Denver/E1”
+out_name = “fGDB.gdb”
+
+arcpy.CreateFileGDB_management(out_folder_path, out_name)
+
+selection = “{field} = ‘{val}’”.format(field= ‘GID_0’, val= ‘USA’)# this extra step is to avoid errors reading field
+usa = arcpy.SelectLayerByAttribute_management(“/fGDB.gdb/gadm36_shp”, “NEW_SELECTION”,selection)
+
+arcpy.CopyFeatures_management(usa, “/fGDB.gdb/usa”)
+
+arcpy.Dissolve_management(usa, “/fGDB.gdb/usa_states”,“NAME_1”, "", "", "")
+print(arcpy.GetMessages())
+
+arcpy.env.workspace = “C:/Users/erika/OneDrive – The University of Colorado Denver/E1”
+inZoneData = “/fGDB.gdb/usa_states”
+zoneField = “NAME_1”
+inValueRaster = “F182013.tif”
+outTable = “zonalstatsumntl.dbf”
+
+arcpy.CheckOutExtension(“Spatial”)
+from arcpy.sa import *
+
+ntlZonalStatistics = ZonalStatisticsAsTable(inZoneData, zoneField, inValueRaster,outTable)
+
+arcpy.env.workspace = “C:/Users/erika/OneDrive – The University of Colorado Denver/E1”
+inZoneData = “/fGDB.gdb/usa_states”
+zoneField = “NAME_1”
+inValueRaster = “GHS_POP.tif”
+outTable = “zonalstatpopulation.dbf”
+
+arcpy.CheckOutExtension(“Spatial”)
+from arcpy.sa import *
+
+ntlZonalStatistics = ZonalStatisticsAsTable(inZoneData, zoneField, inValueRaster,outTable)
+
+arcpy.env.workspace = “C:/Users/erika/OneDrive – The University of Colorado Denver/E1”
+
+in_features = [‘gadm36.shp’]
+out_location = ‘/fGDB.gdb’
+
+arcpy.FeatureClassToGeodatabase_conversion(in_features, out_location)
